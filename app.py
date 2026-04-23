@@ -3,12 +3,17 @@ import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
 
+print("Starting app import...")
 
 df = pd.read_csv("public/05_unified_services_2018_2024.csv")
+print("CSV loaded successfully")
+print(df.head())
+print(df.columns.tolist())
 
 df = df.dropna(subset=["ICT_Exp-Imp", "Cloud_Revenue_pC", "Year"]).copy()
 df["Year"] = df["Year"].astype(int)
 df = df[df["Year"].between(2018, 2024)]
+print("Data cleaned successfully")
 
 EUROPE = [
     "Germany","France","Italy","Spain","Netherlands","Belgium","Austria",
@@ -54,9 +59,9 @@ def assign_color(country):
 
 df["color"] = df["Country Name"].apply(assign_color)
 years = sorted([int(y) for y in df["Year"].dropna().unique()])
+print("Years:", years)
 
 dash_app = dash.Dash(__name__)
-
 dash_app.layout = html.Div(
     style={"backgroundColor": "black", "minHeight": "100vh", "padding": "20px"},
     children=[
@@ -103,6 +108,3 @@ def update_plot(selected_year):
     return fig, f"Year: {selected_year}"
 
 app = dash_app.server
-
-if __name__ == "__main__":
-    dash_app.run(debug=True)
