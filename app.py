@@ -5,7 +5,15 @@ import plotly.express as px
 
 print("Starting app import...")
 
-df = pd.read_csv("public/05_unified_services_2018_2024.csv")
+try:
+    df = pd.read_csv(
+        "https://dev-econ-git-main-johns-projects-44e072b9.vercel.app/05_unified_services_2018_2024.csv"
+    )
+    print("CSV loaded")
+except Exception as e:
+    print("CSV ERROR:", e)
+    raise e
+
 print("CSV loaded successfully")
 print(df.head())
 print(df.columns.tolist())
