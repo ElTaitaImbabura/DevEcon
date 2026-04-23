@@ -2,14 +2,8 @@ import pandas as pd
 import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
-import os
 
-print("Starting app import...")
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(BASE_DIR, "public", "05_unified_services_2018_2024.csv")
-
-df = pd.read_csv(csv_path)
+df = pd.read_csv("05_unified_services_2018_2024.csv")
 
 print("CSV loaded successfully")
 print(df.head())
