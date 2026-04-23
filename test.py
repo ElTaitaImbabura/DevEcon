@@ -2,11 +2,13 @@ import pandas as pd
 import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
+from pathlib import Path
 
 # =========================
 # LOAD DATA
 # =========================
-df = pd.read_csv("05_unified_services_2018_2024.csv")
+BASE_DIR = Path(__file__).resolve().parent
+df = pd.read_csv(BASE_DIR / "public" / "05_unified_services_2018_2024.csv")
 
 # Clean data
 df = df.dropna(subset=["ICT_Exp-Imp", "Cloud_Revenue_pC", "Year"]).copy()
@@ -73,6 +75,7 @@ years = sorted([int(y) for y in df["Year"].dropna().unique()])
 # DASH APP
 # =========================
 app = dash.Dash(__name__)
+server = app.server
 
 app.layout = html.Div(
     style={
