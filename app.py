@@ -10,14 +10,22 @@ import plotly.graph_objects as go
 BASE_DIR = Path(__file__).resolve().parent
 CSV_PATH = BASE_DIR / "05_unified_services_2018_2024.csv"
 
+print("Trying to load:", CSV_PATH)
+
 df = pd.read_csv(CSV_PATH)
+
+print("CSV loaded successfully")
+print(df.head())
+print(df.columns.tolist())
 
 # =========================
 # CLEAN DATA
 # =========================
-df = df.dropna(subset=["ICT_Exp-Imp", "Cloud_Revenue_pC", "Cloud_companies_pP", "Year"]).copy()
+df = df.dropna(subset=["ICT_Exp-Imp", "Cloud_Revenue_pC", "Year"]).copy()
 df["Year"] = df["Year"].astype(int)
 df = df[df["Year"].between(2018, 2024)]
+
+print("Data cleaned successfully")
 
 # =========================
 # REGION DEFINITIONS
@@ -73,17 +81,15 @@ df["color"] = df["Country Name"].apply(assign_color)
 # YEARS + FIXED AXIS RANGES
 # =========================
 years = sorted([int(y) for y in df["Year"].dropna().unique()])
+print("Years:", years)
 
 x_min = df["ICT_Exp-Imp"].min()
 x_max = df["ICT_Exp-Imp"].max()
 y_min = df["Cloud_Revenue_pC"].min()
 y_max = df["Cloud_Revenue_pC"].max()
-z_min = df["Cloud_companies_pP"].min()
-z_max = df["Cloud_companies_pP"].max()
 
 x_pad = (x_max - x_min) * 0.05
 y_pad = (y_max - y_min) * 0.05
-z_pad = (z_max - z_min) * 0.05
 
 # =========================
 # DASH APP
@@ -98,13 +104,17 @@ dash_app.layout = html.Div(
     },
     children=[
         html.H1(
-            "3D ICT_Exp-Imp vs Cloud Revenue vs Cloud Companies (with Traces)",
+            "ICT_Exp-Imp vs Cloud Revenue (Interactive with Traces)",
             style={"color": "white"}
         ),
 
         html.Div(
             id="year-label",
-            style={"color": "white", "fontSize": "20px", "marginBottom": "10px"}
+            style={
+                "color": "white",
+                "fontSize": "20px",
+                "marginBottom": "10px"
+            }
         ),
 
         dcc.Slider(
@@ -117,7 +127,7 @@ dash_app.layout = html.Div(
             updatemode="drag"
         ),
 
-        dcc.Graph(id="scatter-3d-plot", style={"height": "85vh"})
+        dcc.Graph(id="scatter-plot")
     ]
 )
 
@@ -125,7 +135,7 @@ dash_app.layout = html.Div(
 # CALLBACK
 # =========================
 @dash_app.callback(
-    Output("scatter-3d-plot", "figure"),
+    Output("scatter-plot", "figure"),
     Output("year-label", "children"),
     Input("year-slider", "value")
 )
@@ -137,35 +147,32 @@ def update_plot(selected_year):
 
     fig = go.Figure()
 
-    # Trails
+    # Add trace lines for each country
     for country in dff_trail["Country Name"].unique():
         country_data = dff_trail[dff_trail["Country Name"] == country]
 
         if len(country_data) > 1:
             fig.add_trace(
-                go.Scatter3d(
+                go.Scatter(
                     x=country_data["ICT_Exp-Imp"],
                     y=country_data["Cloud_Revenue_pC"],
-                    z=country_data["Cloud_companies_pP"],
                     mode="lines",
-                    line=dict(color=country_data["color"].iloc[0], width=3),
-                    opacity=0.35,
+                    line=dict(color=country_data["color"].iloc[0], width=1.5),
+                    opacity=0.45,
                     hoverinfo="skip",
                     showlegend=False
                 )
             )
 
-    # Current dots
+    # Add current year dots
     fig.add_trace(
-        go.Scatter3d(
+        go.Scatter(
             x=dff_current["ICT_Exp-Imp"],
             y=dff_current["Cloud_Revenue_pC"],
-            z=dff_current["Cloud_companies_pP"],
             mode="markers",
             marker=dict(
-                size=5,
                 color=dff_current["color"],
-                opacity=0.95
+                size=9
             ),
             text=dff_current["Country Name"],
             customdata=dff_current["Year"],
@@ -173,46 +180,31 @@ def update_plot(selected_year):
                 "<b>%{text}</b><br>"
                 "Year: %{customdata}<br>"
                 "ICT_Exp-Imp: %{x}<br>"
-                "Cloud Revenue pC: %{y}<br>"
-                "Cloud Companies pP: %{z}<extra></extra>"
+                "Cloud Revenue pC: %{y}<extra></extra>"
             ),
             showlegend=False
         )
     )
 
     fig.update_layout(
+        plot_bgcolor="black",
         paper_bgcolor="black",
         font=dict(color="white"),
-        scene=dict(
-            bgcolor="black",
-            xaxis=dict(
-                title="ICT_Exp-Imp",
-                range=[x_min - x_pad, x_max + x_pad],
-                backgroundcolor="black",
-                color="white",
-                gridcolor="gray"
-            ),
-            yaxis=dict(
-                title="Cloud Revenue per Capita",
-                range=[y_min - y_pad, y_max + y_pad],
-                backgroundcolor="black",
-                color="white",
-                gridcolor="gray"
-            ),
-            zaxis=dict(
-                title="Cloud Companies pP",
-                range=[z_min - z_pad, z_max + z_pad],
-                backgroundcolor="black",
-                color="white",
-                gridcolor="gray"
-            )
+        xaxis=dict(
+            title="ICT_Exp-Imp",
+            range=[x_min - x_pad, x_max + x_pad]
         ),
-        margin=dict(l=0, r=0, b=0, t=40)
+        yaxis=dict(
+            title="Cloud Revenue per Capita",
+            range=[y_min - y_pad, y_max + y_pad]
+        )
     )
 
     return fig, f"Year: {selected_year}"
 
+# Vercel entrypoint
 app = dash_app.server
 
+# Local testing
 if __name__ == "__main__":
     dash_app.run(debug=True)
