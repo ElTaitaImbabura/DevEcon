@@ -78,10 +78,18 @@ def assign_color(country):
 df["color"] = df["Country Name"].apply(assign_color)
 
 # =========================
-# YEARS
+# YEARS + FIXED AXIS RANGES
 # =========================
 years = sorted([int(y) for y in df["Year"].dropna().unique()])
 print("Years:", years)
+
+x_min = df["ICT_Exp-Imp"].min()
+x_max = df["ICT_Exp-Imp"].max()
+y_min = df["Cloud_Revenue_pC"].min()
+y_max = df["Cloud_Revenue_pC"].max()
+
+x_pad = (x_max - x_min) * 0.05
+y_pad = (y_max - y_min) * 0.05
 
 # =========================
 # DASH APP
@@ -153,8 +161,14 @@ def update_plot(selected_year):
         plot_bgcolor="black",
         paper_bgcolor="black",
         font=dict(color="white"),
-        xaxis=dict(title="ICT_Exp-Imp"),
-        yaxis=dict(title="Cloud Revenue per Capita")
+        xaxis=dict(
+            title="ICT_Exp-Imp",
+            range=[x_min - x_pad, x_max + x_pad]
+        ),
+        yaxis=dict(
+            title="Cloud Revenue per Capita",
+            range=[y_min - y_pad, y_max + y_pad]
+        )
     )
 
     return fig, f"Year: {selected_year}"
