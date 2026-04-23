@@ -5,7 +5,7 @@ import plotly.express as px
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-df = pd.read_csv(BASE_DIR / "public" / "05_unified_services_2018_2024.csv")
+df = pd.read_csv("https://your-vercel-app-name.vercel.app/05_unified_services_2018_2024.csv")
 
 df = df.dropna(subset=["ICT_Exp-Imp", "Cloud_Revenue_pC", "Year"]).copy()
 df["Year"] = df["Year"].astype(int)
