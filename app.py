@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import dash
 from dash import dcc, html, Input, Output
-import plotly.express as px
+import plotly.graph_objects as go
 
 # =========================
 # LOAD DATA
@@ -104,7 +104,7 @@ dash_app.layout = html.Div(
     },
     children=[
         html.H1(
-            "ICT_Exp-Imp vs Cloud Revenue (Interactive)",
+            "ICT_Exp-Imp vs Cloud Revenue (Interactive with Traces)",
             style={"color": "white"}
         ),
 
@@ -141,19 +141,48 @@ dash_app.layout = html.Div(
 )
 def update_plot(selected_year):
     selected_year = int(selected_year)
-    dff = df[df["Year"] == selected_year]
 
-    fig = px.scatter(
-        dff,
-        x="ICT_Exp-Imp",
-        y="Cloud_Revenue_pC",
-        hover_name="Country Name"
-    )
+    dff_current = df[df["Year"] == selected_year]
+    dff_trail = df[df["Year"] <= selected_year].sort_values(["Country Name", "Year"])
 
-    fig.update_traces(
-        marker=dict(
-            color=dff["color"],
-            size=9
+    fig = go.Figure()
+
+    # Add trace lines for each country
+    for country in dff_trail["Country Name"].unique():
+        country_data = dff_trail[dff_trail["Country Name"] == country]
+
+        if len(country_data) > 1:
+            fig.add_trace(
+                go.Scatter(
+                    x=country_data["ICT_Exp-Imp"],
+                    y=country_data["Cloud_Revenue_pC"],
+                    mode="lines",
+                    line=dict(color=country_data["color"].iloc[0], width=1.5),
+                    opacity=0.45,
+                    hoverinfo="skip",
+                    showlegend=False
+                )
+            )
+
+    # Add current year dots
+    fig.add_trace(
+        go.Scatter(
+            x=dff_current["ICT_Exp-Imp"],
+            y=dff_current["Cloud_Revenue_pC"],
+            mode="markers",
+            marker=dict(
+                color=dff_current["color"],
+                size=9
+            ),
+            text=dff_current["Country Name"],
+            customdata=dff_current["Year"],
+            hovertemplate=(
+                "<b>%{text}</b><br>"
+                "Year: %{customdata}<br>"
+                "ICT_Exp-Imp: %{x}<br>"
+                "Cloud Revenue pC: %{y}<extra></extra>"
+            ),
+            showlegend=False
         )
     )
 
